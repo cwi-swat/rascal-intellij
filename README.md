@@ -190,4 +190,16 @@ know where to look in `idea.log` (`Help > Show Log in Files/Finder`):
   when missed, causes a completely silent breakpoint failure (no error, no
   gutter dot). Idempotent: if a DAP configuration already exists (of any
   name), it leaves it alone rather than creating a duplicate.
+  <br><br>
+- **`RascalLanguageRegistry`** makes `util::LanguageServer::registerLanguage(...)`
+  work from a "Rascal: ..." terminal (as in VS Code). Each terminal gets
+  `-Drascal.languageRegistryPort=<port>`; registrations arriving there are
+  forwarded to the "Rascal DSL Language Server (parametric)" (also
+  registered automatically, by `RascalParametricLanguageServerFactory`),
+  and each registered extension (e.g. `*.hql`) is mapped to it at runtime --
+  see Settings > Languages & Frameworks > Language Servers > Mappings.
+  Registrations live only as long as the IDE session: re-run the REPL's
+  `registerLanguage` calls after a restart. If IntelliJ's own SQL support
+  also claims a DSL's extension, move that pattern to the Text file type
+  (Settings > Editor > File Types) so only the DSL's grammar applies.
 

@@ -81,6 +81,22 @@
                 name="Rascal Language Server"
                 factoryClass="com.periteleios.rascalterminal.RascalLanguageServerFactory"/>
         <fileNamePatternMapping serverId="rascal-lsp" patterns="*.rsc" languageId="rascal"/>
+        <!--
+          rascal-lsp's language-parametric server, hosting every DSL
+          registered from a "Rascal: ..." terminal via
+          util::LanguageServer::registerLanguage (what the VS Code extension
+          does with its own ParameterizedLanguageServer). Deliberately no
+          file mappings here: RascalLanguageRegistry adds a *.<ext> mapping
+          at runtime for each extension a REPL registers. See its own javadoc
+          for the full story. lastDocumentDisconnectedTimeout (seconds):
+          LSP4IJ's default of 5 would stop the server moments after the last
+          DSL file closes, and every restart re-loads (re-interprets) each
+          registered DSL from scratch.
+        -->
+        <server id="rascal-parametric"
+                name="Rascal DSL Language Server (parametric)"
+                lastDocumentDisconnectedTimeout="1800"
+                factoryClass="com.periteleios.rascalterminal.RascalParametricLanguageServerFactory"/>
     </extensions>
 
     <actions>

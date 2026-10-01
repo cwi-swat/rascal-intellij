@@ -47,11 +47,21 @@ public final class RascalLanguageServerFactory implements LanguageServerFactory 
 
     @Override
     public @NotNull StreamConnectionProvider createConnectionProvider(@NotNull Project project) {
+        return new OSProcessStreamConnectionProvider(
+            rascalLspCommandLine(project, "org.rascalmpl.vscode.lsp.rascal.RascalLanguageServer"));
+    }
+
+    /**
+     * Package-private: also used by {@link RascalParametricLanguageServerFactory},
+     * which launches a different main class out of the same rascal-lsp jar
+     * and needs the identical JVM, system properties and classpath.
+     */
+    static GeneralCommandLine rascalLspCommandLine(@NotNull Project project, String mainClass) {
         String classpath;
         try {
             classpath = RascalTerminalSupport.computeClasspath(project);
         } catch (Exception e) {
-            LOG.warn("Failed to compute Rascal classpath for the language server", e);
+            LOG.warn("Failed to compute Rascal classpath for " + mainClass, e);
             throw new RuntimeException("Failed to compute Rascal classpath: " + e.getMessage(), e);
         }
 
@@ -60,11 +70,11 @@ public final class RascalLanguageServerFactory implements LanguageServerFactory 
             "-Drascal.lsp.deploy=true",
             "-Drascal.fallbackResolver=org.rascalmpl.vscode.lsp.uri.FallbackResolver",
             "-cp", classpath,
-            "org.rascalmpl.vscode.lsp.rascal.RascalLanguageServer"
+            mainClass
         ));
         if (project.getBasePath() != null) {
             commandLine.setWorkDirectory(project.getBasePath());
         }
-        return new OSProcessStreamConnectionProvider(commandLine);
+        return commandLine;
     }
 }

@@ -63,7 +63,9 @@ final class RascalTerminalSupport {
                 cp = computeClasspath(project);
                 argFile = Files.createTempFile("rascal-shell-", ".args");
                 argFile.toFile().deleteOnExit();
-                Files.writeString(argFile, "-cp \"" + cp + "\"\norg.rascalmpl.shell.RascalShell\n");
+                Files.writeString(argFile, "-cp \"" + cp + "\"\n"
+                    + languageRegistryArgument(project)
+                    + "org.rascalmpl.shell.RascalShell\n");
             } catch (Exception e) {
                 LOG.warn("Failed to compute Rascal classpath", e);
                 notify(project, "Failed to start Rascal terminal for " + moduleName,
@@ -111,6 +113,22 @@ final class RascalTerminalSupport {
                 findAndReportDebugPort(project, moduleName, pid, before);
             }
         });
+    }
+
+    /**
+     * The JVM option that lets util::LanguageServer::registerLanguage in
+     * this REPL reach {@link RascalLanguageRegistry} (read once by rascal-lsp's
+     * RascalInterface; without it every call prints "Could not register
+     * language: no connection"). Best-effort: if the registry can't listen,
+     * the REPL still starts, just without DSL registration.
+     */
+    private static String languageRegistryArgument(Project project) {
+        try {
+            return "-Drascal.languageRegistryPort=" + RascalLanguageRegistry.getInstance(project).port() + "\n";
+        } catch (IOException e) {
+            LOG.warn("Could not start the Rascal language registry; registerLanguage will not work in this terminal", e);
+            return "";
+        }
     }
 
     /** Package-private: also called by {@link RascalLanguageServerFactory}. */
