@@ -23,8 +23,10 @@ import java.util.regex.Pattern;
  * Makes Rascal's own source-location literals -- e.g.
  * {@code |file:///.../Sanity.rsc|(1214,7,<30,17>,<30,24>)}, exactly what the
  * interpreter prints for compile errors and stack traces in a "Run in new
- * Rascal terminal" session -- clickable, jumping straight to the right file
- * and line/column.
+ * Rascal terminal" session, and what rascal-lsp logs (e.g. ParseErrors) in
+ * LSP4IJ's LSP console -- clickable, jumping straight to the right file and
+ * line/column. Every ConsoleView using the predefined filters gets this,
+ * the LSP console included.
  *
  * Without this, IntelliJ's own generic terminal file-link detector
  * (registered by the bundled Terminal plugin) tries to guess a path out of
@@ -75,7 +77,23 @@ final class RascalLocationLinkFilter implements Filter {
             if (items == null) {
                 items = new ArrayList<>();
             }
-            items.add(new ResultItem(lineStart + matcher.start(), lineStart + matcher.end(), hyperlink));
+            // Emitted as three adjacent pieces -- "|", the bare URI, and
+            // "|(offset,length,<l,c>,<l,c>)" -- sharing one target, rather
+            // than one link over the whole literal. IntelliJ's generic
+            // UrlFilter also links the "file:///..." inside it, but wrongly
+            // includes the closing "|" ("Cannot find file .../x.ptl|", seen
+            // in the LSP console), and when links overlap the platform
+            // follows the *smallest* one at the clicked offset
+            // (EditorHyperlinkSupport#choosePreferredLink). The bare-URI
+            // piece is one character shorter than UrlFilter's link, and the
+            // other two pieces are shorter still, so ours wins everywhere.
+            int start = lineStart + matcher.start();
+            int uriStart = lineStart + matcher.start(1);
+            int uriEnd = lineStart + matcher.end(1);
+            int end = lineStart + matcher.end();
+            items.add(new ResultItem(start, uriStart, hyperlink));
+            items.add(new ResultItem(uriStart, uriEnd, hyperlink));
+            items.add(new ResultItem(uriEnd, end, hyperlink));
         }
 
         return items == null ? null : new Result(items);
