@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "com.periteleios"
-version = "0.1.7"
+version = "1.0.0"
 
 dependencies {
     intellijPlatform {
