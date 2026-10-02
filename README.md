@@ -165,24 +165,51 @@ generate a private key and a self-signed certificate, and keep both
 mkdir -p ~/.rascal-intellij-signing && cd ~/.rascal-intellij-signing
 ```
 
-```bash 
+```bash
 openssl genpkey -aes-256-cbc -algorithm RSA -out private_encrypted.pem -pkeyopt rsa_keygen_bits:4096
 ```
+
+asks you to choose a **PEM pass phrase** (twice). It encrypts
+`private_encrypted.pem`: keep it in a password manager -- every signed
+release needs it -- and never commit it or the key.
+
 ```bash
 openssl rsa -in private_encrypted.pem -out private.pem
 ```
+
+asks for it again, to write a temporary *unencrypted* copy that the next
+command uses to create the certificate.
 
 ```bash
 openssl req -key private.pem -new -x509 -days 3650 -out chain.crt
 ```
 
-Then, for each release, set these before `signPlugin` / `publishPlugin`
-(`build/distributions/rascal-intellij-<version>-signed.zip` is the signed zip):
+asks for certificate details such as Organization (e.g. `cwi-swat`); any
+field can be left blank with `.`. Then delete the unencrypted copy again --
+signing uses the encrypted key plus the pass phrase:
+
+```bash
+rm private.pem
+```
+
+Back up `private_encrypted.pem` and `chain.crt` (and the pass phrase):
+losing the key means generating and registering a new one.
+
+Then, before `signPlugin` / `publishPlugin`
+(`build/distributions/rascal-intellij-<version>-signed.zip` is the signed zip),
+point Gradle at the key files -- these two are not secret and can go in
+`~/.bashrc`:
 
 ```bash
 export CERTIFICATE_CHAIN_FILE=~/.rascal-intellij-signing/chain.crt
-export PRIVATE_KEY_FILE=~/.rascal-intellij-signing/private.pem
-export PRIVATE_KEY_PASSWORD=<the passphrase you chose>
+export PRIVATE_KEY_FILE=~/.rascal-intellij-signing/private_encrypted.pem
+```
+
+and enter the pass phrase per release. Don't put it in `~/.bashrc` or any
+file: `read -s` keeps it out of files and shell history.
+
+```bash
+read -rs -p "PEM pass phrase: " PRIVATE_KEY_PASSWORD && export PRIVATE_KEY_PASSWORD
 ```
 
 ---
