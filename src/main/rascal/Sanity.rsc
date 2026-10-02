@@ -1,5 +1,5 @@
 @doc{
-  Exercises the Rascal Debugger plugin end-to-end, across two modules:
+  Exercises the Rascal IntelliJ plugin end-to-end, across two modules:
 
   1. Basic breakpoint: open this file, click "Run in new Rascal terminal"
      above main(), set a breakpoint on the "int sum = ..." line, and type

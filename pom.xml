@@ -11,8 +11,8 @@
 
   <name>rascal-intellij</name>
   <description>
-    Home of the Rascal IntelliJ plugin ("Rascal Debugger")
-    (tools/intellij/rascal-debugger-plugin/) and its supporting scripts,
+    Home of the Rascal IntelliJ plugin ("Rascal" on the JetBrains Marketplace)
+    (tools/intellij/rascal-intellij-plugin/) and its supporting scripts,
     plus a minimal Rascal project to develop and test them against. See
     README.md.
   </description>

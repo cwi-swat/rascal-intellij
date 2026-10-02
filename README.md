@@ -54,7 +54,7 @@ This build needs a JDK **25+** (platform 2026.2.2's own jars are class v69; the 
 **Clean**
 
 ```bash
-cd tools/intellij/rascal-debugger-plugin
+cd tools/intellij/rascal-intellij-plugin
 export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 [ -d "$JAVA_HOME/Contents/Home" ] && export JAVA_HOME="$JAVA_HOME/Contents/Home"
 ./gradlew clean
@@ -63,20 +63,20 @@ export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 **Build**
 
 ```bash
-cd tools/intellij/rascal-debugger-plugin
+cd tools/intellij/rascal-intellij-plugin
 export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 [ -d "$JAVA_HOME/Contents/Home" ] && export JAVA_HOME="$JAVA_HOME/Contents/Home"
 ./gradlew buildPlugin
 ```
 
-Output: `build/distributions/rascal-debugger-<version>.zip` (version from
+Output: `build/distributions/rascal-intellij-<version>.zip` (version from
 `build.gradle.kts`).
 
 ###### Other Gradle tasks
 
 **List Gradle tasks**
 ```bash
-cd tools/intellij/rascal-debugger-plugin
+cd tools/intellij/rascal-intellij-plugin
 export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 [ -d "$JAVA_HOME/Contents/Home" ] && export JAVA_HOME="$JAVA_HOME/Contents/Home"
 ./gradlew tasks
@@ -94,7 +94,7 @@ Attach" DAP configuration for ...`) that proves the auto-creation path
 actually ran, not just that a configuration happened to already exist.
 
 ```bash
-cd tools/intellij/rascal-debugger-plugin
+cd tools/intellij/rascal-intellij-plugin
 export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 [ -d "$JAVA_HOME/Contents/Home" ] && export JAVA_HOME="$JAVA_HOME/Contents/Home"
 ./gradlew runIde
@@ -105,7 +105,7 @@ system dirs under `.intellijPlatform/sandbox/`) if `runIde` ever gets into
 a broken state. Separate from `clean`, which doesn't touch it.
 
 ```bash
-cd tools/intellij/rascal-debugger-plugin
+cd tools/intellij/rascal-intellij-plugin
 export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 [ -d "$JAVA_HOME/Contents/Home" ] && export JAVA_HOME="$JAVA_HOME/Contents/Home"
 ./gradlew cleanSandbox
@@ -117,7 +117,7 @@ Catches "this won't load on IDE version X" problems before shipping a
 release.
 
 ```bash
-cd tools/intellij/rascal-debugger-plugin
+cd tools/intellij/rascal-intellij-plugin
 export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 [ -d "$JAVA_HOME/Contents/Home" ] && export JAVA_HOME="$JAVA_HOME/Contents/Home"
 ./gradlew verifyPlugin
@@ -128,7 +128,7 @@ fields, target platform compatibility. Worth running after editing
 `build.gradle.kts`.
 
 ```bash
-cd tools/intellij/rascal-debugger-plugin
+cd tools/intellij/rascal-intellij-plugin
 export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 [ -d "$JAVA_HOME/Contents/Home" ] && export JAVA_HOME="$JAVA_HOME/Contents/Home"
 ./gradlew verifyPluginProjectConfiguration
@@ -141,14 +141,14 @@ Releases go to the [JetBrains Marketplace](https://plugins.jetbrains.com/),
 under the **cwi-swat** vendor. IntelliJ only offers an update when the
 version number increases, so bump `version` in `build.gradle.kts` first.
 
-- First release only: upload `build/distributions/rascal-debugger-<version>.zip`
+- First release only: upload `build/distributions/rascal-intellij-<version>.zip`
   by hand via the Marketplace's "Upload plugin" page (cwi-swat vendor), then
   wait for JetBrains' review.
 - Every later release: create a permanent token in your Marketplace profile,
   then
 
 ```bash
-cd tools/intellij/rascal-debugger-plugin
+cd tools/intellij/rascal-intellij-plugin
 export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 [ -d "$JAVA_HOME/Contents/Home" ] && export JAVA_HOME="$JAVA_HOME/Contents/Home"
 PUBLISH_TOKEN=<token> ./gradlew publishPlugin
@@ -171,7 +171,7 @@ repository:
     ```
 
 #### Install the plugin:
-- `Settings/Preferences > Plugins > Marketplace` tab, search "Rascal Debugger" (vendor cwi-swat)
+- `Settings/Preferences > Plugins > Marketplace` tab, search "Rascal" (vendor cwi-swat)
 - Install it, restart when prompted.
 
 > Upgrading from a 0.1.x/1.0.x build installed from the old self-hosted
