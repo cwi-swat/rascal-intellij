@@ -163,8 +163,16 @@ generate a private key and a self-signed certificate, and keep both
 
 ```bash
 mkdir -p ~/.rascal-intellij-signing && cd ~/.rascal-intellij-signing
+```
+
+```bash 
 openssl genpkey -aes-256-cbc -algorithm RSA -out private_encrypted.pem -pkeyopt rsa_keygen_bits:4096
+```
+```bash
 openssl rsa -in private_encrypted.pem -out private.pem
+```
+
+```bash
 openssl req -key private.pem -new -x509 -days 3650 -out chain.crt
 ```
 
