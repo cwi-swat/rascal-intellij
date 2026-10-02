@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.redhat.devtools.lsp4ij.LanguageServerFactory;
+import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures;
 import com.redhat.devtools.lsp4ij.server.OSProcessStreamConnectionProvider;
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,12 @@ public final class RascalLanguageServerFactory implements LanguageServerFactory 
     public @NotNull StreamConnectionProvider createConnectionProvider(@NotNull Project project) {
         return new OSProcessStreamConnectionProvider(
             rascalLspCommandLine(project, "org.rascalmpl.vscode.lsp.rascal.RascalLanguageServer"));
+    }
+
+    /** Library files inside jars must reach rascal-lsp as std:/// or jar+file: URIs -- see {@link RascalFileUriSupport}. */
+    @Override
+    public @NotNull LSPClientFeatures createClientFeatures() {
+        return new LSPClientFeatures().setFileUriSupport(new RascalFileUriSupport());
     }
 
     /**

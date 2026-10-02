@@ -13,14 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Bridges Rascal's {@code std:///} scheme (the location scheme baked into the
@@ -34,14 +29,30 @@ import java.util.stream.Stream;
  * back to VirtualFileManager.findFileByUrl, which is exactly what a
  * registered `key="std"` VirtualFileSystem plugs into.
  *
- * Prototype: locates the newest rascal-*.jar under ~/.m2, not scoped per
- * project/version. Good enough as long as one rascal version is in use.
+ * Which rascal jar: exactly the one on the project's pom.xml-derived
+ * classpath ({@link RascalTerminalSupport#computeClasspath}, shared by both
+ * Rascal language servers and the Rascal terminal, reports it via
+ * {@link #useClasspath}) -- so Go to Definition into, say,
+ * {@code std:///String.rsc} opens the String.rsc of the rascal version the
+ * project actually uses. (Previously this picked the "newest" rascal jar in
+ * ~/.m2 by plain string comparison, which ranks 0.43.0-RC8 above both
+ * 0.43.0-RC15 and the project's 0.42.2 -- confirmed live.) There is no
+ * fallback guess. {@code std:///} carries no version and this
+ * VFS is application-wide, so with several open projects on different
+ * rascal versions the most recently computed classpath's jar wins.
+ * <p>
+ * The files returned are ordinary JarFileSystem files;
+ * {@link RascalFileUriSupport} maps them back to {@code std:///...} when
+ * talking to rascal-lsp (see {@link #toStdPath}).
  */
 public class StdFileSystem extends DeprecatedVirtualFileSystem {
     public static final String PROTOCOL = "std";
     private static final String LIBRARY_ROOT = "org/rascalmpl/library";
 
     private static volatile VirtualFile cachedLibraryRoot;
+    /** The rascal jar of the most recently started Rascal language server's classpath, if any. */
+    private static volatile Path classpathJar;
+    private static volatile Path cachedJar;
 
     @Override
     public @NotNull String getProtocol() {
@@ -73,14 +84,47 @@ public class StdFileSystem extends DeprecatedVirtualFileSystem {
         return true;
     }
 
-    private static synchronized VirtualFile getLibraryRoot() {
-        if (cachedLibraryRoot != null && cachedLibraryRoot.isValid()) {
-            return cachedLibraryRoot;
+    /**
+     * Called with a project's full (Maven-computed) classpath whenever a
+     * Rascal language server is launched for it; remembers its rascal jar.
+     */
+    static void useClasspath(String classpath) {
+        for (String entry : classpath.split(java.util.regex.Pattern.quote(File.pathSeparator))) {
+            Path p = Paths.get(entry);
+            if (p.getFileName() != null && isPlainRascalJar(p) && Files.isRegularFile(p)) {
+                classpathJar = p;
+                return;
+            }
         }
-        File jar = locateRascalJar();
-        if (jar == null) {
+    }
+
+    /**
+     * If {@code file} is inside the standard library currently served as
+     * {@code std:///}, its path relative to that root (e.g. "String.rsc"),
+     * otherwise null.
+     */
+    static @Nullable String toStdPath(@NotNull VirtualFile file) {
+        VirtualFile root = getLibraryRoot();
+        if (root == null || !com.intellij.openapi.vfs.VfsUtilCore.isAncestor(root, file, false)) {
             return null;
         }
+        return com.intellij.openapi.vfs.VfsUtilCore.getRelativePath(file, root, '/');
+    }
+
+    static synchronized VirtualFile getLibraryRoot() {
+        Path wanted = classpathJar;
+        if (cachedLibraryRoot != null && cachedLibraryRoot.isValid()
+                && (wanted == null || wanted.equals(cachedJar))) {
+            return cachedLibraryRoot;
+        }
+        if (wanted == null) {
+            // No Rascal language server or terminal has computed a project
+            // classpath yet -- and std:/// locations only ever come from
+            // those, so there is nothing to resolve against. Deliberately no
+            // guessing from ~/.m2: the project's pom.xml decides.
+            return null;
+        }
+        File jar = wanted.toFile();
         VirtualFile localJar = LocalFileSystem.getInstance().findFileByIoFile(jar);
         if (localJar == null) {
             return null;
@@ -90,35 +134,8 @@ public class StdFileSystem extends DeprecatedVirtualFileSystem {
             return null;
         }
         cachedLibraryRoot = jarRoot.findFileByRelativePath(LIBRARY_ROOT);
+        cachedJar = jar.toPath();
         return cachedLibraryRoot;
-    }
-
-    private static File locateRascalJar() {
-        Path repo = Paths.get(System.getProperty("user.home"), ".m2", "repository", "org", "rascalmpl", "rascal");
-        if (!Files.isDirectory(repo)) {
-            return null;
-        }
-        try (Stream<Path> versions = Files.list(repo)) {
-            List<Path> sortedVersions = versions
-                    .filter(Files::isDirectory)
-                    .sorted(Comparator.comparing((Path p) -> p.getFileName().toString()).reversed())
-                    .collect(Collectors.toList());
-            for (Path version : sortedVersions) {
-                try (Stream<Path> jars = Files.list(version)) {
-                    var match = jars
-                            .filter(StdFileSystem::isPlainRascalJar)
-                            .findFirst();
-                    if (match.isPresent()) {
-                        return match.get().toFile();
-                    }
-                } catch (IOException e) {
-                    // try next version
-                }
-            }
-        } catch (IOException e) {
-            return null;
-        }
-        return null;
     }
 
     private static boolean isPlainRascalJar(Path p) {

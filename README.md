@@ -154,8 +154,28 @@ export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 PUBLISH_TOKEN=<token> ./gradlew publishPlugin
 ```
 
-  (`publishPlugin` needs the `intellijPlatform { publishing { token = ... } }`
-  block in `build.gradle.kts`; run `./gradlew verifyPlugin` before uploading.)
+  (`publishPlugin` reads the token from `PUBLISH_TOKEN`; run
+  `./gradlew verifyPlugin` before uploading.)
+
+**Signing** (recommended; proves the zip comes from cwi-swat). One-time:
+generate a private key and a self-signed certificate, and keep both
+*outside* the repo (e.g. `~/.rascal-intellij-signing/`):
+
+```bash
+mkdir -p ~/.rascal-intellij-signing && cd ~/.rascal-intellij-signing
+openssl genpkey -aes-256-cbc -algorithm RSA -out private_encrypted.pem -pkeyopt rsa_keygen_bits:4096
+openssl rsa -in private_encrypted.pem -out private.pem
+openssl req -key private.pem -new -x509 -days 3650 -out chain.crt
+```
+
+Then, for each release, set these before `signPlugin` / `publishPlugin`
+(`build/distributions/rascal-intellij-<version>-signed.zip` is the signed zip):
+
+```bash
+export CERTIFICATE_CHAIN_FILE=~/.rascal-intellij-signing/chain.crt
+export PRIVATE_KEY_FILE=~/.rascal-intellij-signing/private.pem
+export PRIVATE_KEY_PASSWORD=<the passphrase you chose>
+```
 
 ---
 

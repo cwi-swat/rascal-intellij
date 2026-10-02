@@ -42,6 +42,12 @@ import java.util.List;
  */
 final class RascalParametricClientFeatures extends LSPClientFeatures {
 
+    RascalParametricClientFeatures() {
+        // Same jar/std:/// URI mapping as the .rsc server (DSL modules can be
+        // opened from library jars too) -- see RascalFileUriSupport.
+        setFileUriSupport(new RascalFileUriSupport());
+    }
+
     @Override
     public <S extends LanguageServer> @NotNull Launcher.Builder<S> createLauncherBuilder() {
         return new DefaultLauncherBuilder<>(this) {

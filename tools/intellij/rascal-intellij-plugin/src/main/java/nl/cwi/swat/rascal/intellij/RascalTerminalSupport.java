@@ -135,7 +135,11 @@ final class RascalTerminalSupport {
     static String computeClasspath(Project project) throws IOException, InterruptedException {
         Path projectRoot = Path.of(project.getBasePath());
         String projectClasses = projectRoot.resolve("target").resolve("classes").toString();
-        return computeDependencyClasspath(projectRoot) + java.io.File.pathSeparator + projectClasses;
+        String dependencies = computeDependencyClasspath(projectRoot);
+        // So std:/// (e.g. Go to Definition on `import String;`) opens the
+        // rascal version this project's pom.xml uses -- see StdFileSystem.
+        StdFileSystem.useClasspath(dependencies);
+        return dependencies + java.io.File.pathSeparator + projectClasses;
     }
 
     /**

@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "nl.cwi.swat"
-version = "1.0.1"
+version = "1.0.0"
 
 dependencies {
     intellijPlatform {
@@ -44,6 +44,14 @@ intellijPlatform {
         ideaVersion {
             sinceBuild = "242"
         }
+    }
+    // Plugin signing (`./gradlew signPlugin`; publishPlugin signs too), see
+    // README.md. Key and certificate come only from the environment -- never
+    // commit them.
+    signing {
+        certificateChainFile = providers.environmentVariable("CERTIFICATE_CHAIN_FILE").map { file(it) }
+        privateKeyFile = providers.environmentVariable("PRIVATE_KEY_FILE").map { file(it) }
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
     }
     // JetBrains Marketplace upload (`./gradlew publishPlugin`), see README.md.
     publishing {
