@@ -5,10 +5,8 @@
  */
 package nl.cwi.swat.rascal.intellij;
 
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.api.TextMateBundleProvider;
 import org.jetbrains.plugins.textmate.api.TextMateBundleProvider.PluginBundle;
@@ -17,7 +15,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 
 /**
@@ -34,14 +35,16 @@ import java.util.List;
  * idempotent, cache-if-unchanged copy, so nobody has to register the
  * grammar with IntelliJ by hand.
  *
- * Keyed by plugin version (not a content hash or timestamp) so upgrading
- * the plugin automatically re-extracts into a fresh directory instead of
- * risking a stale grammar left over from an older version.
+ * Keyed by a hash of the bundled files' contents, so a changed grammar
+ * (e.g. after a plugin upgrade) is automatically extracted into a fresh
+ * directory instead of reusing a stale one. (Previously keyed by plugin
+ * version, read via PluginManagerCore.getPlugin / PluginManager
+ * .getPluginByClass -- both @ApiStatus.Internal, which the JetBrains
+ * Marketplace rejects; the content hash needs no platform API at all.)
  */
 public final class RascalTextMateBundleProvider implements TextMateBundleProvider {
 
     private static final Logger LOG = Logger.getInstance(RascalTextMateBundleProvider.class);
-    private static final String PLUGIN_ID = "nl.cwi.swat.rascal-intellij";
     private static final String BUNDLE_NAME = "rascal-basic";
     private static final String[] RESOURCE_FILES = {
         "package.json",
@@ -56,25 +59,28 @@ public final class RascalTextMateBundleProvider implements TextMateBundleProvide
     }
 
     private static Path extractBundleIfNeeded() {
-        Path dir = Path.of(PathManager.getSystemPath(), "rascal-textmate-bundle", pluginVersion());
-        if (isComplete(dir)) {
-            return dir;
-        }
+        Path dir = null;
         try {
-            for (String relative : RESOURCE_FILES) {
-                Path target = dir.resolve(relative);
+            byte[][] contents = new byte[RESOURCE_FILES.length][];
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            for (int i = 0; i < RESOURCE_FILES.length; i++) {
+                contents[i] = readResource(RESOURCE_FILES[i]);
+                digest.update(RESOURCE_FILES[i].getBytes(StandardCharsets.UTF_8));
+                digest.update(contents[i]);
+            }
+            String key = HexFormat.of().formatHex(digest.digest()).substring(0, 16);
+            dir = Path.of(PathManager.getSystemPath(), "rascal-textmate-bundle", key);
+            if (isComplete(dir)) {
+                return dir;
+            }
+            for (int i = 0; i < RESOURCE_FILES.length; i++) {
+                Path target = dir.resolve(RESOURCE_FILES[i]);
                 Files.createDirectories(target.getParent());
-                try (InputStream in = RascalTextMateBundleProvider.class
-                        .getResourceAsStream("/rascal-textmate-bundle/" + relative)) {
-                    if (in == null) {
-                        throw new IOException("bundled resource missing: rascal-textmate-bundle/" + relative);
-                    }
-                    Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
-                }
+                Files.write(target, contents[i]);
             }
             return dir;
-        } catch (IOException e) {
-            LOG.warn("Failed to extract Rascal TextMate bundle to " + dir, e);
+        } catch (IOException | NoSuchAlgorithmException e) {
+            LOG.warn("Failed to extract Rascal TextMate bundle" + (dir != null ? " to " + dir : ""), e);
             return null;
         }
     }
@@ -88,8 +94,13 @@ public final class RascalTextMateBundleProvider implements TextMateBundleProvide
         return true;
     }
 
-    private static String pluginVersion() {
-        var plugin = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID));
-        return plugin != null ? plugin.getVersion() : "dev";
+    private static byte[] readResource(String relative) throws IOException {
+        try (InputStream in = RascalTextMateBundleProvider.class
+                .getResourceAsStream("/rascal-textmate-bundle/" + relative)) {
+            if (in == null) {
+                throw new IOException("bundled resource missing: rascal-textmate-bundle/" + relative);
+            }
+            return in.readAllBytes();
+        }
     }
 }

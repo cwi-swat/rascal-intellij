@@ -53,6 +53,14 @@ intellijPlatform {
         privateKeyFile = providers.environmentVariable("PRIVATE_KEY_FILE").map { file(it) }
         password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
     }
+    // `./gradlew verifyPlugin`: runs the IntelliJ Plugin Verifier (the same
+    // check the Marketplace runs on every upload) against one release of each
+    // IDE version in the sinceBuild..untilBuild range.
+    pluginVerification {
+        ides {
+            recommended()
+        }
+    }
     // JetBrains Marketplace upload (`./gradlew publishPlugin`), see README.md.
     publishing {
         token = providers.environmentVariable("PUBLISH_TOKEN")

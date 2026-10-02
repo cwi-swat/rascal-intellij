@@ -7,11 +7,11 @@ package nl.cwi.swat.rascal.intellij;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -21,7 +21,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.redhat.devtools.lsp4ij.LanguageServerManager;
 import com.redhat.devtools.lsp4ij.LanguageServersRegistry;
-import com.redhat.devtools.lsp4ij.LanguageServiceAccessor;
 import com.redhat.devtools.lsp4ij.ServerStatus;
 import com.redhat.devtools.lsp4ij.server.definition.ServerFileNamePatternMapping;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -280,28 +279,30 @@ public final class RascalLanguageRegistry implements Disposable {
                 }
             }
 
-            List<CompletableFuture<?>> connects = new ArrayList<>();
+            // Already-connected editors (the language was registered before,
+            // or the server restarted): drop cached tokens and re-request them.
+            RascalParametricLanguageClient client;
+            synchronized (this) {
+                client = currentClient;
+            }
+            if (client != null) {
+                client.refreshSemanticTokens();
+            }
+            // Editors opened before their extension was mapped: re-run
+            // highlighting, whose LSP4IJ pass now matches the new mapping and
+            // connects the file itself (starting the server if needed and
+            // sending didOpen) -- the same path as opening an editor. Uses
+            // only public API: LSP4IJ's own LanguageServiceAccessor is
+            // @ApiStatus.Internal, which the Marketplace rejects.
+            DaemonCodeAnalyzer daemon = DaemonCodeAnalyzer.getInstance(project);
             for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
                 if (file.getExtension() != null && extensions.contains(file.getExtension())) {
-                    // Same call LSP4IJ itself makes when an editor opens: it
-                    // starts/matches the servers for the file and sends didOpen.
-                    connects.add(ReadAction.compute(() -> {
-                        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-                        return psiFile == null
-                            ? CompletableFuture.completedFuture(null)
-                            : LanguageServiceAccessor.getInstance(project).getLanguageServers(psiFile, null, null);
-                    }));
+                    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+                    if (psiFile != null) {
+                        daemon.restart(psiFile);
+                    }
                 }
             }
-            CompletableFuture.allOf(connects.toArray(CompletableFuture[]::new)).thenRun(() -> {
-                RascalParametricLanguageClient client;
-                synchronized (this) {
-                    client = currentClient;
-                }
-                if (client != null) {
-                    client.refreshSemanticTokens();
-                }
-            });
         }, project.getDisposed());
     }
 
