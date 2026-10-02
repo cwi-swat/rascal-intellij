@@ -6,9 +6,9 @@ This project is a `Gradle IntelliJ Platform plugin` project.<br>
 &nbsp;&nbsp;Whenever you change its source, you need to:
 
 * rebuild the zip using the `gradle` build tool
-* create a new [release on our github repo](https://github.com/Periteleios/rascal-intellij-debugger-releases)
-* reinstall it in IntelliJ
+* reinstall it in IntelliJ to try it out
   - Settings > Plugins > gear icon > Install Plugin from Disk..., then restart when prompted.
+* publish it on the [JetBrains Marketplace](https://plugins.jetbrains.com/) (see "Publishing a release" below)
 
 This build needs a JDK **25+** (platform 2026.2.2's own jars are class v69; the plugin's own bytecode still targets 17).
 
@@ -135,6 +135,28 @@ export JAVA_HOME=~/.jdks/corretto-26.0.2.1
 ```
 
 
+###### Publishing a release
+
+Releases go to the [JetBrains Marketplace](https://plugins.jetbrains.com/),
+under the **cwi-swat** vendor. IntelliJ only offers an update when the
+version number increases, so bump `version` in `build.gradle.kts` first.
+
+- First release only: upload `build/distributions/rascal-debugger-<version>.zip`
+  by hand via the Marketplace's "Upload plugin" page (cwi-swat vendor), then
+  wait for JetBrains' review.
+- Every later release: create a permanent token in your Marketplace profile,
+  then
+
+```bash
+cd tools/intellij/rascal-debugger-plugin
+export JAVA_HOME=~/.jdks/corretto-26.0.2.1
+[ -d "$JAVA_HOME/Contents/Home" ] && export JAVA_HOME="$JAVA_HOME/Contents/Home"
+PUBLISH_TOKEN=<token> ./gradlew publishPlugin
+```
+
+  (`publishPlugin` needs the `intellijPlatform { publishing { token = ... } }`
+  block in `build.gradle.kts`; run `./gradlew verifyPlugin` before uploading.)
+
 ---
 
 # Installing and Running the plugin
@@ -149,14 +171,14 @@ repository:
     ```
 
 #### Install the plugin:
-- `Settings/Preferences > Plugins > gear icon (⚙) > Manage Plugin Repositories... > + >` <br>
-   
-    ```
-    https://raw.githubusercontent.com/Periteleios/rascal-intellij-debugger-releases/main/updatePlugins.xml
-    ```
-
-- Go to the **Marketplace** tab and search "Rascal Debugger"
+- `Settings/Preferences > Plugins > Marketplace` tab, search "Rascal Debugger" (vendor cwi-swat)
 - Install it, restart when prompted.
+
+> Upgrading from a 0.1.x/1.0.x build installed from the old self-hosted
+> plugin repository (`.../rascal-intellij-debugger-releases/.../updatePlugins.xml`):
+> that build has a different plugin id, so it is not updated automatically.
+> Uninstall it first (Settings > Plugins > Installed), and remove that
+> repository under `gear icon (⚙) > Manage Plugin Repositories...`.
 
 
 #### Open the test file provided `src/main/rascal/Sanity.rsc`

@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2026, Periteleios
+ * Copyright (c) 2026, cwi-swat
  * All rights reserved. This file is licensed under the BSD 2-Clause
  * License -- see the LICENSE file in this directory.
  */
-package com.periteleios.rascalterminal;
+package nl.cwi.swat.rascalterminal;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
@@ -41,7 +41,7 @@ import java.util.List;
 public final class RascalTextMateBundleProvider implements TextMateBundleProvider {
 
     private static final Logger LOG = Logger.getInstance(RascalTextMateBundleProvider.class);
-    private static final String PLUGIN_ID = "com.periteleios.rascal-terminal";
+    private static final String PLUGIN_ID = "nl.cwi.swat.rascal-terminal";
     private static final String BUNDLE_NAME = "rascal-basic";
     private static final String[] RESOURCE_FILES = {
         "package.json",

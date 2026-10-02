@@ -1,7 +1,7 @@
 <idea-plugin>
-    <id>com.periteleios.rascal-terminal</id>
+    <id>nl.cwi.swat.rascal-terminal</id>
     <name>Rascal Debugger</name>
-    <vendor>periteleios</vendor>
+    <vendor>cwi-swat</vendor>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.plugins.terminal</depends>
@@ -19,7 +19,7 @@
           back to VirtualFileManager.findFileByUrl for anything else, which
           has nothing registered for "std" until this extension point does.
         -->
-        <virtualFileSystem implementationClass="com.periteleios.rascalterminal.StdFileSystem" key="std" physical="true"/>
+        <virtualFileSystem implementationClass="nl.cwi.swat.rascalterminal.StdFileSystem" key="std" physical="true"/>
         <!--
           Makes Rascal's own |uri|(offset,length,<line,col>,<line,col>)
           location literals, printed for compile errors and stack traces in
@@ -31,7 +31,7 @@
           syntax and shows "Cannot find file" instead of navigating. See
           RascalLocationLinkFilter's own javadoc for the full story.
         -->
-        <consoleFilterProvider implementation="com.periteleios.rascalterminal.RascalLocationLinkFilterProvider"/>
+        <consoleFilterProvider implementation="nl.cwi.swat.rascalterminal.RascalLocationLinkFilterProvider"/>
         <!--
           Registers the Rascal TextMate grammar automatically, so nobody
           has to register it with IntelliJ by hand. See
@@ -39,7 +39,7 @@
           has to be extracted to a real directory rather than served
           straight out of this jar's own resources.
         -->
-        <textmate.bundleProvider implementation="com.periteleios.rascalterminal.RascalTextMateBundleProvider"/>
+        <textmate.bundleProvider implementation="nl.cwi.swat.rascalterminal.RascalTextMateBundleProvider"/>
         <!--
           Auto-creates the "Rascal Attach" DAP Run/Debug configuration (see
           debugAdapterServer below) on project open, including the
@@ -47,7 +47,7 @@
           causes a completely silent breakpoint failure. See
           RascalProjectActivity's own javadoc for the full story.
         -->
-        <postStartupActivity implementation="com.periteleios.rascalterminal.RascalProjectActivity"/>
+        <postStartupActivity implementation="nl.cwi.swat.rascalterminal.RascalProjectActivity"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
@@ -68,7 +68,7 @@
         -->
         <debugAdapterServer id="rascal"
                              name="Rascal Debugger"
-                             factoryClass="com.periteleios.rascalterminal.RascalDebugAdapterDescriptorFactory"/>
+                             factoryClass="nl.cwi.swat.rascalterminal.RascalDebugAdapterDescriptorFactory"/>
         <!--
           Registers the .rsc Language Server automatically, so nobody has
           to manually add it via Settings > Languages & Frameworks >
@@ -79,7 +79,7 @@
         -->
         <server id="rascal-lsp"
                 name="Rascal Language Server"
-                factoryClass="com.periteleios.rascalterminal.RascalLanguageServerFactory"/>
+                factoryClass="nl.cwi.swat.rascalterminal.RascalLanguageServerFactory"/>
         <fileNamePatternMapping serverId="rascal-lsp" patterns="*.rsc" languageId="rascal"/>
         <!--
           rascal-lsp's language-parametric server, hosting every DSL
@@ -96,7 +96,7 @@
         <server id="rascal-parametric"
                 name="Rascal DSL Language Server (parametric)"
                 lastDocumentDisconnectedTimeout="1800"
-                factoryClass="com.periteleios.rascalterminal.RascalParametricLanguageServerFactory"/>
+                factoryClass="nl.cwi.swat.rascalterminal.RascalParametricLanguageServerFactory"/>
     </extensions>
 
     <actions>
@@ -121,8 +121,8 @@
           be contributed by an IntelliJ plugin."
         -->
         <action id="rascalmpl.importModule"
-                class="com.periteleios.rascalterminal.ImportModuleAction"/>
+                class="nl.cwi.swat.rascalterminal.ImportModuleAction"/>
         <action id="rascalmpl.runMain"
-                class="com.periteleios.rascalterminal.RunMainAction"/>
+                class="nl.cwi.swat.rascalterminal.RunMainAction"/>
     </actions>
 </idea-plugin>

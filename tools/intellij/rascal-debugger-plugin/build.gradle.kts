@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Periteleios
+ * Copyright (c) 2026, cwi-swat
  * All rights reserved. This file is licensed under the BSD 2-Clause
  * License -- see the LICENSE file in this directory.
  */
@@ -9,7 +9,7 @@ plugins {
     id("org.jetbrains.intellij.platform")
 }
 
-group = "com.periteleios"
+group = "nl.cwi.swat"
 version = "1.0.1"
 
 dependencies {
@@ -23,13 +23,17 @@ dependencies {
 
 intellijPlatform {
     pluginConfiguration {
-        id = "com.periteleios.rascal-terminal"
+        id = "nl.cwi.swat.rascal-terminal"
         name = "Rascal Debugger"
         version = project.version.toString()
         description = "Adds Rascal debugging support to IntelliJ via LSP4IJ: 'Import'/'Run in new Rascal terminal' CodeLenses that open a real Rascal REPL (and, for 'Run', turn on the interpreter's debugger), plus a 'Rascal Debugger' DAP server that fixes a per-file breakpoint sync bug in LSP4IJ 0.21.0's stock DAP breakpoint handler. Works with any Maven-based Rascal project."
         ideaVersion {
             sinceBuild = "242"
         }
+    }
+    // JetBrains Marketplace upload (`./gradlew publishPlugin`), see README.md.
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
     }
 }
 
