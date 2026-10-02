@@ -5,13 +5,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>nl.cwi.swat</groupId>
-  <artifactId>rascal-intellij-debugger-development</artifactId>
+  <artifactId>rascal-intellij</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>rascal-intellij-debugger-development</name>
+  <name>rascal-intellij</name>
   <description>
-    Standalone home for the Rascal Debugger IntelliJ plugin
+    Home of the Rascal IntelliJ plugin ("Rascal Debugger")
     (tools/intellij/rascal-debugger-plugin/) and its supporting scripts,
     plus a minimal Rascal project to develop and test them against. See
     README.md.

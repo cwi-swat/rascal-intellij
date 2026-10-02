@@ -1,5 +1,5 @@
 Manifest-Version: 0.0.1
-Project-Name: rascal-intellij-debugger
+Project-Name: rascal-intellij
 Source: src/main/rascal
 Library: target/classes
 Main-Function: main
