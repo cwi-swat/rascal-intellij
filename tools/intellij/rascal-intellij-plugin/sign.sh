@@ -27,6 +27,32 @@ case "${1:-}" in
   *) echo "usage: $0 [--new-certificate]" >&2; exit 2 ;;
 esac
 
+# Gradle needs a JDK 25+ (see README.md; the plugin's bytecode still targets 17).
+# Works on Linux and macOS: GRADLE_JAVA_HOME if set, else JDKs under ~/.jdks
+# (newest Corretto 26 first; macOS bundles have their home in Contents/Home),
+# else macOS's /usr/libexec/java_home, else JAVA_HOME.
+is_jdk25plus() {
+  [ -x "$1/bin/java" ] && "$1/bin/java" -version 2>&1 | grep -Eq 'version "(2[5-9]|[3-9][0-9])'
+}
+find_gradle_jdk() {
+  local candidate
+  for candidate in "${GRADLE_JAVA_HOME:-}" "$HOME"/.jdks/corretto-26* "$HOME"/.jdks/*; do
+    [ -n "$candidate" ] && [ -d "$candidate" ] || continue
+    [ -d "$candidate/Contents/Home" ] && candidate="$candidate/Contents/Home"
+    if is_jdk25plus "$candidate"; then echo "$candidate"; return 0; fi
+  done
+  if [ -x /usr/libexec/java_home ] && candidate=$(/usr/libexec/java_home -v 25+ 2>/dev/null); then
+    echo "$candidate"; return 0
+  fi
+  if [ -n "${JAVA_HOME:-}" ] && is_jdk25plus "$JAVA_HOME"; then echo "$JAVA_HOME"; return 0; fi
+  return 1
+}
+GRADLE_JDK=$(find_gradle_jdk) || {
+  echo "No JDK 25+ found (looked in GRADLE_JAVA_HOME, ~/.jdks, /usr/libexec/java_home, JAVA_HOME)." >&2
+  echo "Install one (e.g. via IntelliJ: Project Structure > SDKs > Download JDK), or set GRADLE_JAVA_HOME." >&2
+  exit 1
+}
+
 export CERTIFICATE_CHAIN_FILE="$SIGNING_DIR/chain.crt"
 export PRIVATE_KEY_FILE="$SIGNING_DIR/private_encrypted.pem"
 
@@ -47,6 +73,5 @@ if $new_certificate; then
 fi
 
 cd "$(dirname "$0")"
-# Gradle needs JDK 25+ (see README.md); bytecode still targets 17.
-JAVA_HOME="$HOME/.jdks/corretto-26.0.2.1" ./gradlew signPlugin
+JAVA_HOME="$GRADLE_JDK" ./gradlew signPlugin
 ls -la build/distributions/*-signed.zip
