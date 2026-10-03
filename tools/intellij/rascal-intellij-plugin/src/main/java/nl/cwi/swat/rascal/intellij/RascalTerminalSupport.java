@@ -84,7 +84,16 @@ final class RascalTerminalSupport {
             // RascalShell with UnsupportedClassVersionError before it ever
             // reached ":set debugging true", with nothing surfaced anywhere
             // IntelliJ's own logging could see (it's all inside the PTY).
-            runInTerminal(widget, "exec \"" + javaExecutable() + "\" @\"" + argFile + "\"");
+            // `cd` first: RascalShell treats its working directory as the
+            // project (it reads ./pom.xml and RASCAL.MF from there). The
+            // terminal is *asked* to start in the project folder, but a shell
+            // startup file (e.g. a `cd` in ~/.zshrc) or IntelliJ's own
+            // Terminal "Start directory" setting can move it -- confirmed live
+            // on macOS: the REPL loaded another project's pom.xml and then
+            // failed with "Could not import module Sanity: can not find in
+            // search path".
+            runInTerminal(widget, "cd " + shellQuote(project.getBasePath())
+                + " && exec " + shellQuote(javaExecutable()) + " @" + shellQuote(argFile.toString()));
 
             // ShellTerminalWidget wires up its ProcessTtyConnector
             // asynchronously -- reading it synchronously right after
@@ -296,6 +305,14 @@ final class RascalTerminalSupport {
             .getNotificationGroup("Rascal")
             .createNotification(title, content, type)
             .notify(project);
+    }
+
+    /**
+     * Single-quotes {@code value} for a POSIX shell (bash/zsh), so paths with
+     * spaces or characters like $ " ` survive unchanged.
+     */
+    private static String shellQuote(String value) {
+        return "'" + value.replace("'", "'\\''") + "'";
     }
 
     private static void runInTerminal(ShellTerminalWidget widget, String command) {
