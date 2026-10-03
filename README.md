@@ -202,6 +202,11 @@ signed zip is `build/distributions/rascal-intellij-<version>-signed.zip`):
 cd tools/intellij/rascal-intellij-plugin && ./sign.sh
 ```
 
+To check a signed zip: `./gradlew verifyPluginSignature` confirms it is
+signed with your `chain.crt` and unmodified, and `./gradlew showPluginSignature`
+prints the certificate inside it (name, validity, SHA-256 fingerprint). Both
+also work from IntelliJ's Gradle view.
+
 To change the (public) name in the certificate, or renew it after it
 expires, edit `SUBJECT` at the top of `sign.sh` and run it once with
 `--new-certificate` -- same key, new `chain.crt`:
