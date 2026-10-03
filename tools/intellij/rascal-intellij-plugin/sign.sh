@@ -73,5 +73,7 @@ if $new_certificate; then
 fi
 
 cd "$(dirname "$0")"
-JAVA_HOME="$GRADLE_JDK" ./gradlew signPlugin
+# --rerun: always sign afresh. Otherwise Gradle skips signPlugin as "up-to-date"
+# when the unsigned zip and key are unchanged, silently keeping the old file.
+JAVA_HOME="$GRADLE_JDK" ./gradlew signPlugin --rerun
 ls -la build/distributions/*-signed.zip
