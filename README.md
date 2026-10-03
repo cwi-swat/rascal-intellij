@@ -181,11 +181,11 @@ asks for it again, to write a temporary *unencrypted* copy that the next
 command uses to create the certificate.
 
 ```bash
-openssl req -key private.pem -new -x509 -days 3650 -out chain.crt
+openssl req -key private.pem -new -x509 -days 3650 -out chain.crt -subj "/C=NL/ST=Noord-Holland/L=Amsterdam/O=cwi-swat/OU=Software Analysis and Transformation/CN=cwi-swat"
 ```
 
-asks for certificate details such as Organization (e.g. `cwi-swat`); any
-field can be left blank with `.`. Then delete the unencrypted copy again --
+creates the certificate. Its name is public (embedded in every signed zip),
+so it deliberately contains no personal email. Then delete the unencrypted copy again --
 signing uses the encrypted key plus the pass phrase:
 
 ```bash
@@ -195,22 +195,30 @@ rm private.pem
 Back up `private_encrypted.pem` and `chain.crt` (and the pass phrase):
 losing the key means generating and registering a new one.
 
-Then, before `signPlugin` / `publishPlugin`
-(`build/distributions/rascal-intellij-<version>-signed.zip` is the signed zip),
-point Gradle at the key files -- these two are not secret and can go in
-`~/.bashrc`:
+Then sign each release with `sign.sh` (asks for the pass phrase once; the
+signed zip is `build/distributions/rascal-intellij-<version>-signed.zip`):
 
 ```bash
-export CERTIFICATE_CHAIN_FILE=~/.rascal-intellij-signing/chain.crt
-export PRIVATE_KEY_FILE=~/.rascal-intellij-signing/private_encrypted.pem
+cd tools/intellij/rascal-intellij-plugin && ./sign.sh
 ```
 
-and enter the pass phrase per release. Don't put it in `~/.bashrc` or any
-file: `read -s` keeps it out of files and shell history.
+To change the (public) name in the certificate, or renew it after it
+expires, edit `SUBJECT` at the top of `sign.sh` and run it once with
+`--new-certificate` -- same key, new `chain.crt`:
 
 ```bash
-read -rs -p "PEM pass phrase: " PRIVATE_KEY_PASSWORD && export PRIVATE_KEY_PASSWORD
+cd tools/intellij/rascal-intellij-plugin && ./sign.sh --new-certificate
 ```
+
+Never store the pass phrase in a file or in `~/.bashrc`; keep it in a
+password manager.
+
+**Handing over releases** to another cwi-swat maintainer: they need the two
+files from `~/.rascal-intellij-signing/` (`private_encrypted.pem`,
+`chain.crt`) plus the pass phrase -- and access to the cwi-swat vendor on
+the JetBrains Marketplace. Hand the files and the pass phrase over
+*separately* and through a secure channel (e.g. in person / a password
+manager share), never together in one email or chat message.
 
 ---
 
